@@ -10,11 +10,12 @@ TOPOLOGY = {}
 
 Capistrano::Configuration.instance.load do
 
+  set :chef_role, fetch(:chef_role, :linux_chef)
   set :chef_user, fetch(:chef_user, "chef")
   set :translation_strategy, Object.const_get(fetch(:translation_strategy_class, 'DefaultTranslationStrategy')).new
 
   task :check do
-    find_servers(:roles => :linux_chef).sort_by{|s| s.host}.each do |s|
+    find_servers(:roles => chef_role).sort_by{|s| s.host}.each do |s|
       env, node = find_node s.host
       begin
         exec_local_with_timeout "ssh -o StrictHostKeyChecking=no #{chef_user}@#{node[:topology_hostname]} uname > /dev/null 2>&1", fetch(:check_timeout, 10)
@@ -25,7 +26,7 @@ Capistrano::Configuration.instance.load do
     end
   end
 
-  task :ssh_cmd, :roles => :linux_chef do
+  task :ssh_cmd, :roles => chef_role do
     error "Please specify command with -s cmd=" unless exists? :cmd
     set :user, chef_user
     run cmd
@@ -49,4 +50,22 @@ Capistrano::Configuration.instance.load do
     error "Node not found #{node_name}"
   end
 
+def check_only_one_env servers = nil
+  servers = find_servers unless servers
+  env_list = {}
+  servers.each do |s|
+    env, name, node = find_node(s.is_a?(String) ? s : s.host)
+    env_list[env] = :toto
+  end
+  error "Please, do not launch this command without env" if env_list.keys.size == 0
+  error "Please, do not launch this command on two env : #{env_list.keys.join(' ')}" if env_list.keys.size != 1
+  env = env_list.keys.first
+
+  check_only_one_env_callback(env, servers) if exists? :check_only_one_env_callback
+
+  env
 end
+
+end
+
+require File.join(File.dirname(__FILE__), 'chef.rb')
