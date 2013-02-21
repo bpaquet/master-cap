@@ -13,8 +13,7 @@ Capistrano::Configuration.instance.load do
     task :generate_local_json do
       set :user, chef_user
       env = check_only_one_env
-      find_servers(:roles => chef_role).each do |s|
-        env, node = find_node s.host
+      find_nodes(:roles => chef_role).each do |env, node, s|
         r = []
         r += (TOPOLOGY[env][:default_role_list] || []) unless node[:no_default_role]
         r += node[:roles]
