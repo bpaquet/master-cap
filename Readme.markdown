@@ -49,6 +49,41 @@ Example of a topology file: ``integ.yml``
 * ``cap integ check``: try to connect on each nodes with ssh
 * ``cap integ ssh_cmd -s cmd=uname``: exec ``uname``command on each nodes
 
+# Master-chef binding
+
+## Configuration
+
+If you use only master-chef (no custom repo with Chef recipes), you have nothing to do.
+
+If you use a custom repo, please add following lines before requiring master-cap
+
+```ruby
+set :git_repos_manager_class, 'SimpleGitReposManager'
+
+set :git_repos, [
+  {
+    :url => "http://github.com/octo-technology/master-chef.git",
+    :ref => "aa597911b6d394dff27338c825aa966105cb6607",
+  },
+  {
+    :url => "git@github.com:xxxx/yyyy.git",
+    :local_path => "../yyyy",
+  }
+]
+```
+
+Note:
+* ``:ref`` is used to lock master-chef version
+* ``:local_path`` is used to run ``chef:local``
+
+# Cap commands
+
+* ``cap integ chef``: run chef on all servers
+* ``cap app-integ chef:local``: run chef on app server, using local recipes. Usefull for debugging.
+* ``cap app-integ chef:generate_local_json``: generate the ``local.json`` file using current topology.
+* ``cap app-integ chef:stack``: output last chef stack trace
+* ``cap integ chef:stack``: purge all master-chef git repos caches
+
 # License
 
 Copyright 2012 Bertrand Paquet
