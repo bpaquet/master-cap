@@ -35,7 +35,7 @@ Capistrano::Configuration.instance.load do
       end
       git_repos_manager.list.each do |git_repo|
         if git_repo =~ /^.+@.+:.+\.git$/
-          run "sudo ssh -o StrictHostKeyChecking=no #{git_repo.split(':')[0]} echo toto || true > /dev/null 2>&1", :roles => chef_role
+          run "sudo ssh -o StrictHostKeyChecking=no #{git_repo.split(':')[0]} echo toto > /dev/null 2>&1 || true ", :roles => chef_role
         end
       end
     end
