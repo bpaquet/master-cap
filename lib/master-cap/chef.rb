@@ -1,5 +1,6 @@
 require 'tempfile'
 require 'json'
+require 'yaml'
 
 require File.join(File.dirname(__FILE__), 'git_repos_manager.rb')
 

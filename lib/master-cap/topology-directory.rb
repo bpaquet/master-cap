@@ -1,6 +1,8 @@
 
 require File.join(File.dirname(__FILE__), 'topology.rb')
 
+require 'yaml'
+
 Capistrano::Configuration.instance.load do
 
   topology_directory = fetch(:topology_directory, 'topology')
