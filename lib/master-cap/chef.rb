@@ -31,7 +31,7 @@ Capistrano::Configuration.instance.load do
         f = Tempfile.new File.basename("local_json_#{name}")
         f.write json
         f.close
-        upload f.path, "/etc/chef/local.json", {:hosts => [s]}
+        upload_to_root f.path, "/etc/chef/local.json", {:hosts => [s]}
       end
       git_repos_manager.list.each do |git_repo|
         if git_repo =~ /^.+@.+:.+\.git$/
