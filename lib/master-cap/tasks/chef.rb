@@ -29,7 +29,7 @@ Capistrano::Configuration.instance.load do
         f = Tempfile.new File.basename("local_json_#{name}")
         f.write json
         f.close
-        upload_to_root f.path, "/etc/chef/local.json", {:hosts => [s]}
+        upload_to_root f.path, "/opt/master-chef/etc/local.json", {:hosts => [s]}
       end
       git_repos_manager.list.each do |git_repo|
         if git_repo =~ /^.+@.+:.+\.git$/
@@ -55,7 +55,7 @@ Capistrano::Configuration.instance.load do
         f.write JSON.dump(git_tag_override)
         f.close
 
-        upload_to_root f.path, "/etc/chef/local.json.git_tag_override"
+        upload_to_root f.path, "/opt/master-chef/etc/local.json.git_tag_override"
       end
 
     end
@@ -67,24 +67,24 @@ Capistrano::Configuration.instance.load do
       f = Tempfile.new File.basename("topology_env")
       f.write YAML.dump(TOPOLOGY[env])
       f.close
-      upload_to_root f.path, "/etc/chef/topology.yml"
+      upload_to_root f.path, "/opt/master-chef/etc/topology.yml"
     end
 
     task :default, :roles => chef_role  do
       set :user, chef_user
       upload_topology
       upload_git_tag_override
-      run "#{get_prefix} /etc/chef/update.sh"
+      run "#{get_prefix} /opt/master-chef/bin/master-chef.sh"
     end
 
     task :stack, :roles => chef_role  do
       set :user, chef_user
-      run "sudo cat /var/chef/cache/chef-stacktrace.out"
+      run "sudo cat /opt/chef/var/cache/chef-stacktrace.out"
     end
 
     task :purge_cache, :roles => chef_role do
       set :user, chef_user
-      run "sudo rm -rf /var/chef/cache/git_repos"
+      run "sudo rm -rf /opt/master-chef/var/cache/git_repos"
     end
 
     task :local, :roles => chef_role  do
@@ -92,11 +92,23 @@ Capistrano::Configuration.instance.load do
       upload_topology
       find_servers(:roles => chef_role).each do |x|
         prefix = ""
-        prefix = "PROXY=#{http_proxy}" if exists? :http_proxy
+        prefix += "OMNIBUS=1 "
+        prefix += "PROXY=#{http_proxy}" if exists? :http_proxy
         command = "sh -c \"#{prefix} #{master_chef_path}/runtime/chef_local.rb #{x} #{git_repos_manager.compute_local_path}\""
         abort unless system command
       end
     end
+
+  task :install, :roles => :linux_chef do
+      set :user, chef_user
+      env = check_only_one_env
+      prefix = get_prefix
+      prefix += "OMNIBUS=1 "
+      prefix += "PROXY=#{http_proxy} " if exists? :http_proxy
+      prefix += "MASTER_CHEF_HASH_CODE=#{master_chef_hash_code} " if exists? :master_chef_hash_code
+      run "#{get_prefix} curl -f -s -L http://rawgithub.com/octo-technology/master-chef/master/runtime/bootstrap.sh | #{prefix} bash"
+    end
+
 
   end
 
