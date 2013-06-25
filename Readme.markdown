@@ -5,8 +5,10 @@ Here are [capistrano](https://github.com/capistrano/capistrano/wiki) extensions 
 # How to use it
 
 * Add ``master-cap`` to your Gemfile
-* Load ``master-cap`` in your Capfile: ``require 'master-cap/topology-directory.rb'``
-* Create a subdirectory named ``topology``, and add your toplogy YAML files into
+* Load ``master-cap`` in your Capfile: ``require 'master-cap'``
+* Choose a topology driver and load it
+** ``on :load, :load_topology_directory``
+** Create a subdirectory named ``topology``, and add your toplogy YAML files into
 * Enjoy :)
 
 # Topology file
