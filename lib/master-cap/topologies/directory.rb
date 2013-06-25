@@ -1,13 +1,11 @@
 
-require File.join(File.dirname(__FILE__), 'topology.rb')
-
 require 'yaml'
 
 Capistrano::Configuration.instance.load do
 
   topology_directory = fetch(:topology_directory, 'topology')
 
-  task :load_topology do
+  task :load_topology_directory do
     Dir["#{topology_directory}/*.yml"].each do |f|
       env = File.basename(f).split('.')[0]
       TOPOLOGY[env] = YAML.load(File.read(f))
@@ -54,8 +52,6 @@ Capistrano::Configuration.instance.load do
       end
     end
   end
-
-  on :load, "load_topology"
 
   def load_cap_override env
     TOPOLOGY[env][:cap_override].each do |k, v|

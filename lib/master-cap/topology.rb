@@ -1,10 +1,5 @@
 
-require File.join(File.dirname(__FILE__), 'misc.rb')
-require File.join(File.dirname(__FILE__), 'default_translation_strategy.rb')
-
-unless Capistrano::Configuration.respond_to?(:instance)
-  abort "master-cap requires Capistrano 2"
-end
+require 'master-cap/topologies/directory.rb'
 
 TOPOLOGY = {}
 
@@ -72,5 +67,3 @@ Capistrano::Configuration.instance.load do
   end
 
 end
-
-require File.join(File.dirname(__FILE__), 'chef.rb')

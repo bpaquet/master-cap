@@ -1,10 +1,6 @@
 
 require 'timeout'
 
-unless Capistrano::Configuration.respond_to?(:instance)
-  abort "master-cap requires Capistrano 2"
-end
-
 Capistrano::Configuration.instance.load do
 
   def exec_local_with_timeout cmd, timeout
