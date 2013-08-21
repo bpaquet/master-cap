@@ -37,11 +37,11 @@ Capistrano::Configuration.instance.load do
   def upload_to_root local, remote, options = {}
     tmp_file = "/tmp/#{File.basename(remote)}"
     upload local, tmp_file, options
-    run_root "mv #{tmp_file} #{remote}"
+    run_root "mv #{tmp_file} #{remote}", options
   end
 
-  def run_root cmd
-    run "sudo sh -c '#{cmd}'"
+  def run_root cmd, options = {}
+    run "sudo sh -c '#{cmd}'", options
   end
 
   def error msg
