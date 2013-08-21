@@ -94,12 +94,12 @@ Capistrano::Configuration.instance.load do
         prefix = ""
         prefix += "OMNIBUS=1 "
         prefix += "PROXY=#{http_proxy}" if exists? :http_proxy
-        command = "sh -c \"#{prefix} #{master_chef_path}/runtime/chef_local.rb #{x} #{git_repos_manager.compute_local_path}\""
+        command = "sh -c \"#{prefix} #{master_chef_path}/runtime/chef_local.rb #{x} '#{git_repos_manager.compute_local_path}'\""
         abort unless system command
       end
     end
 
-  task :install, :roles => :linux_chef do
+    task :install, :roles => :linux_chef do
       set :user, chef_user
       env = check_only_one_env
       prefix = get_prefix
