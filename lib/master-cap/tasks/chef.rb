@@ -14,7 +14,7 @@ Capistrano::Configuration.instance.load do
       env = check_only_one_env
       find_nodes(:roles => chef_role).each do |env, node, s|
         roles = []
-        roles += TOPOLOGY[env][:default_role_list] if TOPOLOGY[env][:default_role_list]
+        roles += TOPOLOGY[env][:default_role_list] if TOPOLOGY[env][:default_role_list] && !node[:no_default_role]
         roles += node[:roles] if node[:roles]
         recipes = []
         recipes += node[:recipes] if node[:recipes]
