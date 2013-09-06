@@ -13,14 +13,16 @@ Capistrano::Configuration.instance.load do
       set :user, chef_user
       env = check_only_one_env
       find_nodes(:roles => chef_role).each do |env, node, s|
-        r = []
-        r += TOPOLOGY[env][:default_role_list] if TOPOLOGY[env][:default_role_list]
-        r += node[:roles] if node[:roles]
+        roles = []
+        roles += TOPOLOGY[env][:default_role_list] if TOPOLOGY[env][:default_role_list]
+        roles += node[:roles] if node[:roles]
+        recipes = []
+        recipes += nodes[:recipes] if node[:recipes]
         json = JSON.pretty_generate({
           :repos => {
             :git => git_repos_manager.list,
           },
-          :run_list => r.map{|x| "role[#{x}]"},
+          :run_list => roles.map{|x| "role[#{x}]"} + recipes.map{|x| "recipe[#{x}]"},
           :node_config => {
             :topology_node_name => node[:topology_name]
           }.merge(node[:node_override] || {})
