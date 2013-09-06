@@ -14,8 +14,8 @@ Capistrano::Configuration.instance.load do
       env = check_only_one_env
       find_nodes(:roles => chef_role).each do |env, node, s|
         r = []
-        r += (TOPOLOGY[env][:default_role_list] || []) unless node[:no_default_role]
-        r += node[:roles]
+        r += TOPOLOGY[env][:default_role_list] if TOPOLOGY[env][:default_role_list]
+        r += node[:roles] if node[:roles]
         json = JSON.pretty_generate({
           :repos => {
             :git => git_repos_manager.list,
@@ -23,7 +23,7 @@ Capistrano::Configuration.instance.load do
           :run_list => r.map{|x| "role[#{x}]"},
           :node_config => {
             :topology_node_name => node[:topology_name]
-          }
+          }.merge(node[:node_override] || {})
         })
         puts json
         f = Tempfile.new File.basename("local_json_#{name}")
