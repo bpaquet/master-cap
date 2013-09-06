@@ -30,7 +30,7 @@ Capistrano::Configuration.instance.load do
     ss = find_nodes
     puts "Number of selected servers: #{ss.length}"
     ss.each do |env, node|
-      puts "#{fill(node[:topology_name], 30)} #{fill(node[:topology_hostname], 50)} [#{node[:roles].sort.join(',')}]"
+      puts "#{fill(node[:topology_name], 30)} #{fill(node[:topology_hostname], 50)} [#{((node[:roles] || []) + (node[:recipes] || [])).sort.join(',')}]"
     end
   end
 
