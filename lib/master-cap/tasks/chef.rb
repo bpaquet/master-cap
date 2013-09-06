@@ -16,11 +16,13 @@ Capistrano::Configuration.instance.load do
         roles = []
         roles += TOPOLOGY[env][:default_role_list] if TOPOLOGY[env][:default_role_list] && !node[:no_default_role]
         roles += node[:roles] if node[:roles]
+        git_repos = git_repos_manager.list
+        git_repos += node[:git_repos] if node[:git_repos]
         recipes = []
         recipes += node[:recipes] if node[:recipes]
         json = JSON.pretty_generate({
           :repos => {
-            :git => git_repos_manager.list,
+            :git => git_repos,
           },
           :run_list => roles.map{|x| "role[#{x}]"} + recipes.map{|x| "recipe[#{x}]"},
           :node_config => {
