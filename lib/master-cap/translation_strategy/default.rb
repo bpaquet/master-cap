@@ -11,4 +11,8 @@ class DefaultTranslationStrategy
     raise "No hostname in #{node}"
   end
 
+  def vm_name env, name, node, topology
+    node_name env, name, node, topology
+  end
+
 end

@@ -22,6 +22,7 @@ Capistrano::Configuration.instance.load do
         v[:topology_name] = translation_strategy.node_name(env, k, v, TOPOLOGY[env])
         v[:topology_hostname] = begin translation_strategy.node_hostname(env, k, v, TOPOLOGY[env]) rescue nil end
         next unless v[:topology_hostname]
+        v[:vm_name] = translation_strategy.vm_name(env, k, v, TOPOLOGY[env])
         node_roles = []
         node_roles += v[:roles].map{|x| x.to_sym} if v[:roles]
         node_roles << v[:type].to_sym if v[:type]

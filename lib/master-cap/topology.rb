@@ -6,13 +6,13 @@ TOPOLOGY = {}
 Capistrano::Configuration.instance.load do
 
   set :chef_role, fetch(:chef_role, :linux_chef)
-  set :chef_user, fetch(:chef_user, "chef")
+  set :user, fetch(:user, "chef")
   set :translation_strategy, Object.const_get(fetch(:translation_strategy_class, 'DefaultTranslationStrategy')).new
 
   task :check do
     find_nodes(:roles => chef_role).sort_by{|env, node, s| s.host}.each do |env, node|
       begin
-        exec_local_with_timeout "ssh -o StrictHostKeyChecking=no #{chef_user}@#{node[:topology_hostname]} uname > /dev/null 2>&1", fetch(:check_timeout, 10)
+        exec_local_with_timeout "ssh -o StrictHostKeyChecking=no #{user}@#{node[:topology_hostname]} uname > /dev/null 2>&1", fetch(:check_timeout, 10)
         puts "OK    : #{node[:topology_hostname]}"
       rescue
         puts "ERROR : Unable to join #{node[:topology_hostname]}"
@@ -22,7 +22,6 @@ Capistrano::Configuration.instance.load do
 
   task :ssh_cmd, :roles => chef_role do
     error "Please specify command with -s cmd=" unless exists? :cmd
-    set :user, chef_user
     run cmd
   end
 
@@ -38,6 +37,12 @@ Capistrano::Configuration.instance.load do
     env = check_only_one_env
     File.open("#{env}.json", 'w') {|io| io.write(JSON.pretty_generate(TOPOLOGY[env]))}
     puts "File written #{env}.json"
+  end
+
+  task :ssh do
+    find_servers.map{|s| s.host}.each do |s|
+      exec_local "ssh #{user}@#{s}"
+    end
   end
 
   def find_node node_name

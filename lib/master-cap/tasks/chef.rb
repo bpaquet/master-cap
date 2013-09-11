@@ -10,7 +10,6 @@ Capistrano::Configuration.instance.load do
     set :git_repos_manager, Object.const_get(fetch(:git_repos_manager_class, 'EmptyGitReposManager')).new(self)
 
     task :generate_local_json do
-      set :user, chef_user
       env = check_only_one_env
       find_nodes(:roles => chef_role).each do |env, node, s|
         roles = []
@@ -49,7 +48,6 @@ Capistrano::Configuration.instance.load do
     end
 
     task :upload_git_tag_override, :roles => :linux_chef do
-      set :user, chef_user
       env = check_only_one_env
 
       git_tag_override = git_repos_manager.compute_override(env)
@@ -65,7 +63,6 @@ Capistrano::Configuration.instance.load do
     end
 
     task :upload_topology, :roles => :linux_chef  do
-      set :user, chef_user
       env = check_only_one_env
 
       f = Tempfile.new File.basename("topology_env")
@@ -75,24 +72,20 @@ Capistrano::Configuration.instance.load do
     end
 
     task :default, :roles => chef_role  do
-      set :user, chef_user
       upload_topology
       upload_git_tag_override
       run "#{get_prefix} /opt/master-chef/bin/master-chef.sh"
     end
 
     task :stack, :roles => chef_role  do
-      set :user, chef_user
       run "sudo cat /opt/chef/var/cache/chef-stacktrace.out"
     end
 
     task :purge_cache, :roles => chef_role do
-      set :user, chef_user
       run "sudo rm -rf /opt/master-chef/var/cache/git_repos"
     end
 
     task :local, :roles => chef_role  do
-      set :user, chef_user
       upload_topology
       find_servers(:roles => chef_role).each do |x|
         prefix = ""
@@ -104,7 +97,6 @@ Capistrano::Configuration.instance.load do
     end
 
   task :install, :roles => :linux_chef do
-      set :user, chef_user
       env = check_only_one_env
       prefix = get_prefix
       prefix += "OMNIBUS=1 "
