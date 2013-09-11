@@ -1,5 +1,7 @@
 
 require 'yaml'
+require 'erubis'
+require 'deep_merge'
 
 Capistrano::Configuration.instance.load do
 
@@ -7,8 +9,13 @@ Capistrano::Configuration.instance.load do
 
   task :load_topology_directory do
     Dir["#{topology_directory}/*.yml"].each do |f|
+      next if f =~ /.inc.yml/
       env = File.basename(f).split('.')[0]
+      puts "Loading file #{f}"
       TOPOLOGY[env] = YAML.load(File.read(f))
+
+      load_included_files env, topology_directory
+
       nodes = []
       roles_map = Hash.new { |hash, key| hash[key] = [] }
       TOPOLOGY[env][:topology].each do |k, v|
@@ -55,6 +62,24 @@ Capistrano::Configuration.instance.load do
     TOPOLOGY[env][:cap_override].each do |k, v|
       set k, v
     end if TOPOLOGY[env][:cap_override]
+  end
+
+  def load_included_files env, topology_directory
+    return unless TOPOLOGY[env][:includes]
+    TOPOLOGY[env][:includes][:files].each do |f|
+      template = nil
+      begin
+        file = "#{topology_directory}/#{f}"
+        puts "Loading file #{file}"
+        params = TOPOLOGY[env][:includes][:params] || {}
+        template = YAML.load(::Erubis::Eruby.new(File.read(file)).result(params))
+      rescue Exception => e
+        puts "ERROR : Error while reading [#{file}]"
+        raise e
+      end
+      TOPOLOGY[env].deep_merge!(template, :merge_hash_arrays => true)
+    end
+    TOPOLOGY[env].delete :includes
   end
 
 end

@@ -22,4 +22,7 @@ Gem::Specification.new do |s|
   s.specification_version = 3
   s.add_runtime_dependency(%q<capistrano>, [">= 2"])
   s.add_runtime_dependency(%q<json>)
+  s.add_runtime_dependency(%q<erubis>)
+  s.add_runtime_dependency(%q<deep_merge>)
+  s.add_runtime_dependency(%q<peach>)
 end

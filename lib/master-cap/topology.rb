@@ -34,6 +34,12 @@ Capistrano::Configuration.instance.load do
     end
   end
 
+  task :json do
+    env = check_only_one_env
+    File.open("#{env}.json", 'w') {|io| io.write(JSON.pretty_generate(TOPOLOGY[env]))}
+    puts "File written #{env}.json"
+  end
+
   def find_node node_name
     TOPOLOGY.each do |k, v|
       v[:topology].each do |name, node|
