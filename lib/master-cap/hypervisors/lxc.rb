@@ -72,7 +72,8 @@ EOF
       @ssh.exec "ssh-keygen -t ecdsa -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host_ecdsa_key -C root@#{name} -N ''"
 
       @ssh.exec "cp /tmp/iface /var/lib/lxc/#{name}/rootfs/etc/network/interfaces"
-      @ssh.exec "echo nameserver #{gateway} | sudo tee -a /var/lib/lxc/#{name}/rootfs/etc/resolv.conf"
+      @ssh.exec "rm /var/lib/lxc/#{name}/rootfs/etc/resolv.conf"
+      @ssh.exec "echo nameserver #{gateway} | sudo tee /var/lib/lxc/#{name}/rootfs/etc/resolv.conf"
 
       @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs userdel ubuntu"
       @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs rm -rf /home/ubuntu"
