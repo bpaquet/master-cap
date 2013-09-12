@@ -1,6 +1,7 @@
 require 'peach'
 
 HYPERVISORS={}
+DNS={}
 
 Capistrano::Configuration.instance.load do
 
@@ -16,6 +17,21 @@ Capistrano::Configuration.instance.load do
         end
       end
       raise errors if errors
+    end
+
+    def get_dns config
+      unless DNS[:dns]
+        params = config[:params] || {}
+        type = config[:type]
+        clazz = "Dns#{type.to_s.capitalize}"
+        begin
+          Object.const_get clazz
+        rescue
+          require "master-cap/dns/#{type}.rb"
+        end
+        DNS[:dns] = Object.const_get(clazz).new(self, params)
+      end
+      DNS[:dns]
     end
 
     def get_hypervisor hypervisor_name
@@ -180,5 +196,60 @@ Capistrano::Configuration.instance.load do
         hyp.delete_vms l, exists?(:no_dry)
       end
     end
+
+    def go_dns purge
+      env = check_only_one_env
+      return unless TOPOLOGY[env][:dns_provider]
+      dns = get_dns TOPOLOGY[env][:dns_provider]
+      list = []
+      for_existing(true) do |hyp, l, dry|
+        list += hyp.dns_ips l, false
+        list += hyp.dns_ips TOPOLOGY[env][:topology].select{|name, node| node[:type].to_sym != :linux_chef}.map{|name, node| [name.to_s, node]}, true
+      end
+      for_not_existing(true) do |hyp, l, dry|
+        list += hyp.dns_ips l, true
+      end
+      list += Hypervisor.extract_dns_ips TOPOLOGY[env][:topology].select{|name, node| node[:type].to_sym != :linux_chef}
+      zones = {}
+      list.select!{|l| l[:ip]}
+      list.each do |l|
+        raise "Unable to parse #{l[dns]}" unless l[:dns].match(/^([^\.]+)\.(.*)$/)
+        z, h = $2, $1
+        zones[z] = [] unless zones[z]
+        zones[z] << {:ip => l[:ip], :name => h}
+      end
+      zones.each do |name, ll|
+        next if exists?(:ignore_zones) && ignore_zones.include?(name)
+        uniq_map = {}
+        ll.each do |r|
+          raise "Conflict on zone #{name} on #{r[:name]} : #{r[:ip]}, #{uniq_map[r[:name]]}" if uniq_map[r[:name]] && uniq_map[r[:name]] != r[:ip]
+          uniq_map[r[:name]] = r[:ip]
+        end
+        ll = uniq_map.map{|k, v| {:name => k, :ip => v}}
+        dns.sync name, ll, purge if exists?(:no_dry)
+      end
+    end
+
+    namespace :dns do
+
+      task :sync do
+        go_dns true
+      end
+
+      task :update do
+        go_dns false
+      end
+
+    end
+
+  end
+
+  namespace :dns do
+
+    task :sync do
+      top.vm.dns.sync
+    end
+
+  end
 
 end
