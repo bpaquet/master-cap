@@ -67,9 +67,9 @@ EOF
       @ssh.exec "cat /tmp/config | sudo tee -a /var/lib/lxc/#{name}/config"
       @ssh.exec "mount /dev/#{@params[:vg_name]}/#{name} /var/lib/lxc/#{name}/rootfs"
       @ssh.exec "rm -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host*key*"
-      @ssh.exec "ssh-keygen -t rsa -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host_rsa_key -N ''"
-      @ssh.exec "ssh-keygen -t dsa -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host_dsa_key -N ''"
-      @ssh.exec "ssh-keygen -t ecdsa -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host_ecdsa_key -N ''"
+      @ssh.exec "ssh-keygen -t rsa -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host_rsa_key -C root@#{name} -N ''"
+      @ssh.exec "ssh-keygen -t dsa -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host_dsa_key -C root@#{name} -N ''"
+      @ssh.exec "ssh-keygen -t ecdsa -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host_ecdsa_key -C root@#{name} -N ''"
 
       @ssh.exec "cp /tmp/iface /var/lib/lxc/#{name}/rootfs/etc/network/interfaces"
       @ssh.exec "echo nameserver #{gateway} | sudo tee -a /var/lib/lxc/#{name}/rootfs/etc/resolv.conf"
