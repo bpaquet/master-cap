@@ -65,7 +65,7 @@ Capistrano::Configuration.instance.load do
     task :upload_topology, :roles => :linux_chef  do
       env = check_only_one_env
 
-      f = Tempfile.new File.basename("topology_env")
+      f = Tempfile.new "topology_env"
       f.write JSON.dump(TOPOLOGY[env])
       f.close
       upload_to_root f.path, "/opt/master-chef/etc/topology.json"
