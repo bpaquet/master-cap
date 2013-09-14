@@ -83,4 +83,6 @@ Capistrano::Configuration.instance.load do
     TOPOLOGY[env].delete :includes
   end
 
+  on :load, :load_topology_directory
+
 end
