@@ -42,6 +42,20 @@ Capistrano::Configuration.instance.load do
 
     end
 
+    task :deploy_all do
+      env = check_only_one_env
+      APPS.keys.sort.each do |x|
+        get_app(env, APPS[x][:name]).deploy if APPS[x][:env] == env
+      end
+    end
+
+    task :force_deploy_all do
+      env = check_only_one_env
+      APPS.keys.sort.each do |x|
+        get_app(env, APPS[x][:name]).force_deploy if APPS[x][:env] == env
+      end
+    end
+
     def get_app env, name
       unless APPS["#{env}_#{name}"][:apps]
         clazz = "Apps#{APPS["#{env}_#{name}"][:config][:type].to_s.capitalize}"
