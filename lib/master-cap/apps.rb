@@ -9,12 +9,19 @@ Capistrano::Configuration.instance.load do
 
     task :load_apps do
       apps_list = {}
+      extented_tasks = {}
       TOPOLOGY.each do |name, env|
         if env[:apps]
           env[:apps].each do |n, a|
             apps_list[n] = [] unless apps_list[n]
+            extented_tasks[n] = [] unless extented_tasks[n]
             apps_list[n] << name
             APPS["#{name}_#{n}"] = {:config => a, :env => name, :name => n}
+            if a[:cap_wrapped_tasks]
+              a[:cap_wrapped_tasks].each do |x|
+                extented_tasks[n] << x unless extented_tasks[n].include? x
+              end
+            end
           end
         end
       end
@@ -27,14 +34,11 @@ Capistrano::Configuration.instance.load do
             get_app(env, x).deploy
           end
 
-          task :force_deploy do
-            env = check_only_one_env
-            get_app(env, x).force_deploy
-          end
-
-          task :versions do
-            env = check_only_one_env
-            get_app(env, x).versions
+          extented_tasks[x].each do |y|
+            task y do
+              env = check_only_one_env
+              get_app(env, x).wrapped_task(y)
+            end
           end
 
         end
@@ -46,13 +50,6 @@ Capistrano::Configuration.instance.load do
       env = check_only_one_env
       APPS.keys.sort.each do |x|
         get_app(env, APPS[x][:name]).deploy if APPS[x][:env] == env
-      end
-    end
-
-    task :force_deploy_all do
-      env = check_only_one_env
-      APPS.keys.sort.each do |x|
-        get_app(env, APPS[x][:name]).force_deploy if APPS[x][:env] == env
       end
     end
 

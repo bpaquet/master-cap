@@ -11,7 +11,7 @@ class AppsCapistrano < AppsBase
     raise "Unknown scm #{config[:scm]}" if config[:scm] != :git
   end
 
-  def opts
+  def default_opts
     {
       :application => name,
       :repository => config[:repository],
@@ -22,7 +22,7 @@ class AppsCapistrano < AppsBase
   end
 
   def deploy
-    run_sub_cap :deploy, opts
+    run_sub_cap :deploy
   end
 
 end
