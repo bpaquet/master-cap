@@ -29,5 +29,12 @@ Capistrano::Configuration.instance.load do
     load f
   end
 
+  task :purge_cached_directory_if_remote_change, :roles => :app do
+    cache = "#{shared_path}/cached-copy"
+    run "if [ -d #{cache} ]; then cd #{cache} && git remote -v | grep origin | grep #{repository} || (echo Purging cached copy #{cache}; rm -rf #{cache}); fi"
+  end
+
+  before 'deploy:update', :purge_cached_directory_if_remote_change
+
 end
 
