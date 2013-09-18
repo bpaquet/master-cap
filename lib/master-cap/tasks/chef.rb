@@ -102,7 +102,7 @@ Capistrano::Configuration.instance.load do
       prefix += "OMNIBUS=1 "
       prefix += "PROXY=#{http_proxy} " if exists? :http_proxy
       prefix += "MASTER_CHEF_HASH_CODE=#{master_chef_hash_code} " if exists? :master_chef_hash_code
-      run "#{get_prefix} curl -f -s -L http://rawgithub.com/octo-technology/master-chef/master/runtime/bootstrap.sh | #{prefix} bash"
+      run "#{get_prefix} curl -f -s -L http://rawgithub.com/octo-technology/master-chef/master/runtime/bootstrap.sh?#{master_chef_hash_code} | #{prefix} bash"
     end
 
 
