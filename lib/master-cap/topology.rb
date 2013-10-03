@@ -7,7 +7,6 @@ Capistrano::Configuration.instance.load do
 
   set :chef_role, fetch(:chef_role, :linux_chef)
   set :user, fetch(:user, "chef")
-  set :translation_strategy, Object.const_get(fetch(:translation_strategy_class, 'DefaultTranslationStrategy')).new
 
   task :check do
     find_nodes(:roles => chef_role).sort_by{|env, node, s| s.host}.each do |env, node|
@@ -29,7 +28,7 @@ Capistrano::Configuration.instance.load do
     ss = find_nodes
     puts "Number of selected servers: #{ss.length}"
     ss.each do |env, node|
-      puts "#{fill(node[:topology_name], 30)} #{fill(node[:topology_hostname], 50)} [#{((node[:roles] || []) + (node[:recipes] || [])).sort.join(',')}]"
+      puts "#{fill(node[:capistrano_name], 30)} #{fill(node[:admin_hostname], 50)} [#{((node[:roles] || []) + (node[:recipes] || [])).sort.join(',')}]"
     end
   end
 
@@ -48,7 +47,7 @@ Capistrano::Configuration.instance.load do
   def find_node node_name
     TOPOLOGY.each do |k, v|
       v[:topology].each do |name, node|
-        return [k, node] if translation_strategy.node_hostname(k, name, node, v) == node_name
+        return [k, node] if get_translation_strategy(k).ip(:admin, name)[:hostname] == node_name
       end
     end
     error "Node not found #{node_name}"
@@ -75,6 +74,10 @@ Capistrano::Configuration.instance.load do
     check_only_one_env_callback(env, servers) if exists? :check_only_one_env_callback
 
     env
+  end
+
+  def get_translation_strategy env
+    TOPOLOGY[env][:translation_strategy]
   end
 
 end

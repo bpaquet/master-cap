@@ -16,20 +16,29 @@ Capistrano::Configuration.instance.load do
 
       load_included_files env, topology_directory
 
+      translation_strategy_class = TOPOLOGY[env][:translation_strategy_class] || 'DefaultTranslationStrategy'
+      TOPOLOGY[env][:translation_strategy] = Object.const_get(translation_strategy_class).new(env, TOPOLOGY[env])
+
       nodes = []
       roles_map = Hash.new { |hash, key| hash[key] = [] }
       TOPOLOGY[env][:topology].each do |k, v|
-        v[:topology_name] = translation_strategy.node_name(env, k, v, TOPOLOGY[env])
-        v[:topology_hostname] = begin translation_strategy.node_hostname(env, k, v, TOPOLOGY[env]) rescue nil end
-        next unless v[:topology_hostname]
-        v[:vm_name] = translation_strategy.vm_name(env, k, v, TOPOLOGY[env])
+        v[:topology_name] = k
+        v[:capistrano_name] = get_translation_strategy(env).capistrano_name(k)
+        v[:topology_hostname] = get_translation_strategy(env).hostname(k)
+        v[:vm_name] = get_translation_strategy(env).vm_name(k)
+        v[:host_ips] = {}
+        get_translation_strategy(env).ip_types.each do |x|
+          v[:host_ips][x] = get_translation_strategy(env).ip(x, k)
+        end
+        v[:admin_hostname] = v[:host_ips][:admin][:hostname]
+        next unless v[:admin_hostname]
         node_roles = []
         node_roles += v[:roles].map{|x| x.to_sym} if v[:roles]
         node_roles << v[:type].to_sym if v[:type]
-        n = {:name => k.to_s, :host => v[:topology_hostname], :roles => node_roles}
+        n = {:name => k.to_s, :host => v[:admin_hostname], :roles => node_roles}
         nodes << n
 
-        task v[:topology_name] do
+        task v[:capistrano_name] do
           server n[:host], *node_roles if n[:host]
           load_cap_override env
         end

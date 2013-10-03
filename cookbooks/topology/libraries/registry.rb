@@ -88,7 +88,7 @@ class RegistryMasterCap < Registry
           when :mysql
             load_extensions
             mysql_conf = mysql_config(config[:id].to_s)
-            topology_nodes = find_using_topology(config[:target_role], max_layer)
+            topology_nodes = find_using_topology(config[:target_role], config[:ip_type], max_layer)
             if mysql_conf[:database]
               topology_nodes.each do |topology_node|
                 topology_node["id"] = config[:id]
@@ -104,7 +104,7 @@ class RegistryMasterCap < Registry
             result += topology_nodes
           when :url
             url = (config[:target_url] ? config[:target_url].to_sym : nil)
-            topology_nodes = find_using_topology(config[:target_role], max_layer)
+            topology_nodes = find_using_topology(config[:target_role], config[:ip_type], max_layer)
             topology_nodes.each do |topology_node|
               uri = format_url(create_url(topology_node["ip"], url)).chomp("/")
               topology_node["uri"] = uri
@@ -184,7 +184,7 @@ class RegistryMasterCap < Registry
   end
 
   def find_hostname(n)
-    node.topology[n]["hostname"]
+    node.topology[n]["topology_hostname"]
   end
 
   def encode(s)
@@ -206,15 +206,15 @@ class RegistryMasterCap < Registry
     end
   end
 
-  def find_using_topology(role, max_layer)
+  def find_using_topology(role, ip_type, max_layer)
     role = role ? role.to_sym : role
     result = []
     find_nodes_by_role(role).each_pair do |node_name, node_param|
-      result << {'hostname' => find_hostname(node_name), 'layer' => LAYER_STANDARD, 'ip' => extract_ip(node_name, node_param)}
+      result << {'hostname' => find_hostname(node_name), 'layer' => LAYER_STANDARD, 'ip' => extract_ip(node_name, node_param, ip_type)}
     end
     find_localizers_by_role(role).each do |r|
       if max_layer >= r['layer']
-        result << {'hostname' => find_hostname(r['node_name']), 'layer' => r['layer'], 'ip' => extract_ip(r['node_name'], r['node_config'])}
+        result << {'hostname' => find_hostname(r['node_name']), 'layer' => r['layer'], 'ip' => extract_ip(r['node_name'], r['node_config'], ip_type)}
       end
     end
     result
@@ -232,8 +232,9 @@ class RegistryMasterCap < Registry
     config
   end
 
-  def extract_ip(node_name, node_config)
-    node_config[:hostname] || node_config[:ip]
+  def extract_ip(node_name, node_config, ip_type)
+    c = node_config[:host_ips][ip_type || :user]
+    c[:hostname] || c[:ip]
   end
 
   def find_localizers_by_role(role)

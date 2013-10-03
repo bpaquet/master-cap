@@ -39,7 +39,8 @@ class HypervisorLxc < Hypervisor
   def create_vms l, no_dry
     return unless no_dry
     l.each do |name, vm|
-      puts "Creating #{name} (#{vm[:ip]})"
+      ip_config = vm[:host_ips][:admin]
+      puts "Creating #{name} (#{ip_config[:ip]})"
       gateway = @ssh.capture("/bin/sh -c '. /etc/default/lxc && echo \\$LXC_ADDR'").strip
       netmask = @ssh.capture("/bin/sh -c '. /etc/default/lxc && echo \\$LXC_NETMASK'").strip
 
@@ -49,7 +50,7 @@ iface lo inet loopback
 
 auto eth0
 iface eth0 inet static
-  address #{vm[:ip]}
+  address #{ip_config[:ip]}
   netmask #{netmask}
   gateway #{gateway}
 EOF
@@ -91,7 +92,7 @@ EOF
       @ssh.exec "rm /tmp/iface"
       @ssh.exec "lxc-start -d -n #{name}"
       @ssh.exec "ln -s /var/lib/lxc/#{name}/config /etc/lxc/auto/#{name}"
-      wait_ssh vm[:ip], @cap.fetch(:user)
+      wait_ssh ip_config[:ip], @cap.fetch(:user)
     end
   end
 
