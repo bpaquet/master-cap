@@ -1,7 +1,7 @@
 
 service "hostname" do
   supports :restart => true
-  action auto_compute_action
+  action :nothing
 end
 
 ohai "reload_hostname" do
