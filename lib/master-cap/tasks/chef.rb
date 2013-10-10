@@ -89,7 +89,6 @@ Capistrano::Configuration.instance.load do
       upload_topology
       find_servers(:roles => chef_role).each do |x|
         prefix = ""
-        prefix += "OMNIBUS=1 "
         prefix += "PROXY=#{http_proxy}" if exists? :http_proxy
         command = "sh -c \"#{prefix} #{master_chef_path}/runtime/chef_local.rb #{x} #{git_repos_manager.compute_local_path}\""
         abort unless system command
@@ -99,7 +98,6 @@ Capistrano::Configuration.instance.load do
   task :install, :roles => :linux_chef do
       env = check_only_one_env
       prefix = get_prefix
-      prefix += "OMNIBUS=1 "
       prefix += "PROXY=#{http_proxy} " if exists? :http_proxy
       prefix += "MASTER_CHEF_HASH_CODE=#{master_chef_hash_code} " if exists? :master_chef_hash_code
       version = exists?(:master_chef_hash_code) ? master_chef_hash_code : "master"
