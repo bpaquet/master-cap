@@ -41,7 +41,7 @@ Capistrano::Configuration.instance.load do
   end
 
   def run_root cmd, options = {}
-    run "sudo sh -c '#{cmd}'", options
+    run "sudo su - -c '#{cmd}'", options
   end
 
   def error msg
