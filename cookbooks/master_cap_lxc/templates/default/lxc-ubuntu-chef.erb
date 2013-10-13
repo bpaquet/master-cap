@@ -218,6 +218,8 @@ EOF
     chroot "$1/partial-${arch}" locale-gen en_US.UTF-8
     echo "LANG=en_US.UTF-8" > "$1/partial-${arch}/etc/default/locale"
 
+    grep -r ^kernel. "$1/partial-${arch}/etc/sysctl.d" | awk -F: '{print $1}' | sort | uniq | xargs rm -f
+
     mv "$1/partial-$arch" "$1/rootfs-$arch"
     trap EXIT
     trap SIGINT
