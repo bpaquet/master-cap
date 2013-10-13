@@ -209,14 +209,31 @@ EOF
     lxc-unshare -s MOUNT -- chroot "$1/partial-${arch}" apt-get dist-upgrade -y || { suggest_flush; false; }
     rm -f "$1/partial-${arch}"/usr/sbin/policy-rc.d
 
+    echo "Configuring locales"
+
+    chroot "$1/partial-${arch}" locale-gen en_US.UTF-8
+    echo "LANG=en_US.UTF-8" > "$1/partial-${arch}/etc/default/locale"
+
+    echo "Installing master chef dependencies"
+
     chroot "$1/partial-${arch}" apt-get install git-core -y
     chroot "$1/partial-${arch}" apt-get install curl -y
     chroot "$1/partial-${arch}" apt-get install bzip2 -y
 
     chroot "$1/partial-${arch}" apt-get clean
 
-    chroot "$1/partial-${arch}" locale-gen en_US.UTF-8
-    echo "LANG=en_US.UTF-8" > "$1/partial-${arch}/etc/default/locale"
+    echo "Boostraping master-chef"
+
+    <% [@chef_url, @master_chef_url].each do |x| %>
+
+    echo "Installing <%= x %>"
+    chroot "$1/partial-${arch}" curl -L -k -f -s <%= x %> -o /tmp/<%= File.basename(x) %>
+    chroot "$1/partial-${arch}" dpkg -i /tmp/<%= File.basename(x) %>
+    chroot "$1/partial-${arch}" rm /tmp/<%= File.basename(x) %>
+
+    <% end %>
+
+    # remove sysctl which does not run under lxc
 
     grep -r ^kernel. "$1/partial-${arch}/etc/sysctl.d" | awk -F: '{print $1}' | sort | uniq | xargs rm -f
 

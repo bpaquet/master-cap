@@ -91,7 +91,7 @@ EOF
       command = "lxc-create -t #{template_name} -n #{name} -f /tmp/lxc_config"
       command += " -B lvm --vgname #{lvm_vg} --fssize #{lvm_size}" if lvm_mode
       command += " -- #{template_opts}"
-      puts command
+      puts "Command line : #{command}"
       @ssh.exec command
       @ssh.exec "mount /dev/#{lvm_vg}/#{name} /var/lib/lxc/#{name}/rootfs" if lvm_mode
       @ssh.exec "rm -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host*key*"
@@ -106,7 +106,7 @@ EOF
       # @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs userdel ubuntu"
       # @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs rm -rf /home/ubuntu"
 
-      @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs useradd #{user} --shell /bin/bash --create-home --home /home/#{user}"
+      @ssh.exec "cat /var/lib/lxc/#{name}/rootfs/etc/passwd | grep \"^chef\" || chroot /var/lib/lxc/#{name}/rootfs useradd #{user} --shell /bin/bash --create-home --home /home/#{user}"
       @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs mkdir /home/#{user}/.ssh"
       @ssh.scp "/var/lib/lxc/#{name}/rootfs/home/#{user}/.ssh/authorized_keys", ssh_keys.join("\n")
       @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs chown -R #{user} /home/#{user}/.ssh"

@@ -12,6 +12,7 @@ package "lxc"
 template "/usr/lib/lxc/templates/lxc-ubuntu-chef" do
   source "lxc-ubuntu-chef.erb"
   mode '0755'
+  variables node.master_cap_lxc
 end
 
 template "/etc/sysctl.d/20-inotify.conf" do
