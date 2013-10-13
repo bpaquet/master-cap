@@ -17,6 +17,7 @@ class DnsDnsmasq
   def line name, r
     "#{r[:ip]} #{r[:name]}.#{name}"
   end
+
   def sync name, records, purge
     file = "#{@params[:hosts_path]}/#{name}"
     if purge
