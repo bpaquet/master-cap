@@ -106,11 +106,13 @@ EOF
       # @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs userdel ubuntu"
       # @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs rm -rf /home/ubuntu"
 
-      @ssh.exec "cat /var/lib/lxc/#{name}/rootfs/etc/passwd | grep \"^chef\" || chroot /var/lib/lxc/#{name}/rootfs useradd #{user} --shell /bin/bash --create-home --home /home/#{user}"
+      @ssh.exec "cat /var/lib/lxc/#{name}/rootfs/etc/passwd | grep ^chef || sudo chroot /var/lib/lxc/#{name}/rootfs useradd #{user} --shell /bin/bash --create-home --home /home/#{user}"
       @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs mkdir /home/#{user}/.ssh"
       @ssh.scp "/var/lib/lxc/#{name}/rootfs/home/#{user}/.ssh/authorized_keys", ssh_keys.join("\n")
       @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs chown -R #{user} /home/#{user}/.ssh"
-      @ssh.exec "echo 'chef   ALL=(ALL) NOPASSWD:ALL' | sudo tee -a /var/lib/lxc/#{name}/rootfs/etc/sudoers"
+      @ssh.exec "cat /var/lib/lxc/#{name}/rootfs/etc/sudoers | grep \"^chef\" || echo 'chef   ALL=(ALL) NOPASSWD:ALL' | sudo tee -a /var/lib/lxc/#{name}/rootfs/etc/sudoers"
+
+      @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs which curl || sudo chroot /var/lib/lxc/#{name}/rootfs apt-get install curl -y"
 
       @ssh.exec "umount /dev/#{lvm_vg}/#{name}" if lvm_mode
       @ssh.exec "rm /tmp/lxc_config"
