@@ -36,31 +36,30 @@ class HypervisorLxc < Hypervisor
     end
   end
 
+  def default_vm_config
+    @params[:default_vm]
+  end
+
   def create_vms l, no_dry
     return unless no_dry
     l.each do |name, vm|
       ip_config = vm[:host_ips][:admin]
-      template_name = vm[:vm][:template_name] || @params[:default_vm][:template_name]
-      template_opts = vm[:vm][:template_opts] || @params[:default_vm][:template_opts] || ""
+      template_name = vm[:vm][:template_name]
+      template_opts = vm[:vm][:template_opts] || ""
       raise "No template specified for vm #{name}" unless template_name
       puts "Creating #{name}, using template #{template_name}, options #{template_opts}"
-      network_gateway = vm[:vm][:network_gateway] || @params[:default_vm][:network_gateway] || @ssh.capture("/bin/sh -c '. /etc/default/lxc && echo \\$LXC_ADDR'").strip
-      network_netmask = vm[:vm][:network_netmask] || @params[:default_vm][:network_netmask] || @ssh.capture("/bin/sh -c '. /etc/default/lxc && echo \\$LXC_NETMASK'").strip
-      network_bridge = vm[:vm][:network_bridge] || @params[:default_vm][:network_bridge] || @ssh.capture("/bin/sh -c '. /etc/default/lxc && echo \\$LXC_BRIDGE'").strip
-      network_dns = vm[:vm][:network_dns] || @params[:default_vm][:network_dns] || network_gateway
+      network_gateway = vm[:vm][:network_gateway] || @ssh.capture("/bin/sh -c '. /etc/default/lxc && echo \\$LXC_ADDR'").strip
+      network_netmask = vm[:vm][:network_netmask] || @ssh.capture("/bin/sh -c '. /etc/default/lxc && echo \\$LXC_NETMASK'").strip
+      network_bridge = vm[:vm][:network_bridge] || @ssh.capture("/bin/sh -c '. /etc/default/lxc && echo \\$LXC_BRIDGE'").strip
+      network_dns = vm[:vm][:network_dns] || network_gateway
       puts "Network config for #{name} : #{ip_config[:ip]} / #{network_netmask}, gateway #{network_gateway}, bridge #{network_bridge}, dns #{network_dns}"
 
-      ssh_keys = []
-      ssh_keys += @params[:default_vm][:ssh_keys] if @params[:default_vm][:ssh_keys]
-      ssh_keys += vm[:vm][:ssh_keys] if vm[:vm][:ssh_keys]
-
-      lvm_mode = vm[:vm][:lvm] || @params[:default_vm][:lvm]
+      ssh_keys = vm[:vm][:ssh_keys]
+      lvm_mode = vm[:vm][:lvm]
 
       if lvm_mode
-        lvm_vg = vm[:vm][:lvm][:vg_name] || @params[:default_vm][:lvm][:vg_name]
-        lvm_size = vm[:vm][:lvm][:root_size] || @params[:default_vm][:lvm][:root_size]
-        raise "No vg for #{name}" unless lvm_vg
-        raise "No size for #{name}" unless lvm_size
+        raise "No vg for #{name}" unless vm[:vm][:lvm][:vg_name]
+        raise "No size for #{name}" unless vm[:vm][:lvm][:root_size]
       end
 
       user = @cap.fetch(:user)
@@ -89,15 +88,17 @@ EOF
       config << ""
       @ssh.scp "/tmp/lxc_config", config.join("\n")
       command = "lxc-create -t #{template_name} -n #{name} -f /tmp/lxc_config"
-      command += " -B lvm --vgname #{lvm_vg} --fssize #{lvm_size}" if lvm_mode
+      command += " -B lvm --vgname #{vm[:vm][:lvm][:vg_name]} --fssize #{vm[:vm][:lvm][:root_size]}" if lvm_mode
       command += " -- #{template_opts}"
       puts "Command line : #{command}"
       @ssh.exec command
-      @ssh.exec "mount /dev/#{lvm_vg}/#{name} /var/lib/lxc/#{name}/rootfs" if lvm_mode
+      @ssh.exec "mount /dev/#{vm[:vm][:lvm][:vg_name]}/#{name} /var/lib/lxc/#{name}/rootfs" if lvm_mode
       @ssh.exec "rm -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host*key*"
       @ssh.exec "ssh-keygen -t rsa -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host_rsa_key -C root@#{name} -N '' -q "
       @ssh.exec "ssh-keygen -t dsa -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host_dsa_key -C root@#{name} -N '' -q "
       @ssh.exec "ssh-keygen -t ecdsa -f /var/lib/lxc/#{name}/rootfs/etc/ssh/ssh_host_ecdsa_key -C root@#{name} -N '' -q"
+
+      @ssh.exec "sed -i 's/^127.0.1.1.*$/127.0.1.1 #{vm[:admin_hostname]} #{name}/' /var/lib/lxc/#{name}/rootfs/etc/hosts"
 
       @ssh.scp "/var/lib/lxc/#{name}/rootfs/etc/network/interfaces", iface
       @ssh.exec "rm /var/lib/lxc/#{name}/rootfs/etc/resolv.conf"
@@ -114,7 +115,7 @@ EOF
 
       @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs which curl || sudo chroot /var/lib/lxc/#{name}/rootfs apt-get install curl -y"
 
-      @ssh.exec "umount /dev/#{lvm_vg}/#{name}" if lvm_mode
+      @ssh.exec "umount /dev/#{vm[:vm][:lvm][:vg_name]}/#{name}" if lvm_mode
       @ssh.exec "rm /tmp/lxc_config"
       @ssh.exec "lxc-start -d -n #{name}"
       @ssh.exec "ln -s /var/lib/lxc/#{name}/config /etc/lxc/auto/#{name}"

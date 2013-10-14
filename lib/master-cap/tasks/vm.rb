@@ -56,11 +56,12 @@ Capistrano::Configuration.instance.load do
       get_hypervisor(hypervisor_name).list.include? name
     end
 
-    def get_vm node
+    def get_vm node, hypervisor
       env = check_only_one_env
       node = node.clone
       node[:vm] = {} unless node[:vm]
-      node[:vm] = TOPOLOGY[env][:default_vm].merge(node[:vm]) if TOPOLOGY[env][:default_vm]
+      node[:vm] = TOPOLOGY[env][:default_vm].deep_merge(node[:vm]) if TOPOLOGY[env][:default_vm]
+      node[:vm] = hypervisor.default_vm_config.deep_merge(node[:vm]) if hypervisor.respond_to? :default_vm_config
       node
     end
 
@@ -123,10 +124,10 @@ Capistrano::Configuration.instance.load do
         hypervisor = get_hypervisor(hypervisor_name)
         if hypervisor.exist?(name)
           exists[hypervisor_name] ||= []
-          exists[hypervisor_name] << [name, get_vm(node)]
+          exists[hypervisor_name] << [name, get_vm(node, hypervisor)]
         else
           not_exists[hypervisor_name] ||= []
-          not_exists[hypervisor_name] << [name, get_vm(node)]
+          not_exists[hypervisor_name] << [name, get_vm(node, hypervisor)]
         end
       end
       return exists, not_exists
