@@ -75,15 +75,26 @@ iface eth0 inet static
   gateway #{network_gateway}
 EOF
 
+      override_ohai = {}
       config = []
 
       config << "lxc.network.type = veth"
       config << "lxc.network.link = #{network_bridge}"
       config << "lxc.network.flags = up"
       config << ""
-      config << "lxc.cgroup.memory.limit_in_bytes = #{vm[:vm][:memory]}" if vm[:vm][:memory]
-      config << "lxc.cgroup.memory.memsw.limit_in_bytes = #{vm[:vm][:memory_swap]}" if vm[:vm][:memory_swap]
-      config << "lxc.cgroup.cpu.shares = #{vm[:vm][:cpu_shares]}" if vm[:vm][:cpu_shares]
+      if vm[:vm][:memory]
+        config << "lxc.cgroup.memory.limit_in_bytes = #{vm[:vm][:memory]}"
+        override_ohai[:memory] = {} unless override_ohai[:memory]
+        override_ohai[:memory][:total] = vm[:vm][:memory]
+      end
+      if vm[:vm][:memory_swap]
+        config << "lxc.cgroup.memory.memsw.limit_in_bytes = #{vm[:vm][:memory_swap]}"
+      end
+      if vm[:vm][:cpu_shares]
+        config << "lxc.cgroup.cpu.shares = #{vm[:vm][:cpu_shares]}"
+        override_ohai[:cpu] = {} unless override_ohai[:cpu]
+        override_ohai[:cpu][:total] = (vm[:vm][:cpu_shares] / 1024).to_i
+      end
       config << ""
       config << ""
       @ssh.scp "/tmp/lxc_config", config.join("\n")
@@ -115,6 +126,7 @@ EOF
 
       @ssh.exec "chroot /var/lib/lxc/#{name}/rootfs which curl || sudo chroot /var/lib/lxc/#{name}/rootfs apt-get install curl -y"
 
+      @ssh.scp "/var/lib/lxc/#{name}/rootfs/opt/master-chef/etc/override_ohai.json", JSON.dump(override_ohai) unless override_ohai.empty? || @params[:no_ohai_override]
       @ssh.exec "umount /dev/#{vm[:vm][:lvm][:vg_name]}/#{name}" if lvm_mode
       @ssh.exec "rm /tmp/lxc_config"
       @ssh.exec "lxc-start -d -n #{name}"
