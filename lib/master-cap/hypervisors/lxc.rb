@@ -97,8 +97,8 @@ EOF
       end
       config << ""
       config << ""
-      @ssh.scp "/tmp/lxc_config", config.join("\n")
-      command = "lxc-create -t #{template_name} -n #{name} -f /tmp/lxc_config"
+      @ssh.scp "/tmp/lxc_config_#{Process.pid.to_s}", config.join("\n")
+      command = "lxc-create -t #{template_name} -n #{name} -f /tmp/lxc_config_#{Process.pid.to_s}"
       command += " -B lvm --vgname #{vm[:vm][:lvm][:vg_name]} --fssize #{vm[:vm][:lvm][:root_size]}" if lvm_mode
       command += " -- #{template_opts}"
       puts "Command line : #{command}"
@@ -128,7 +128,7 @@ EOF
 
       @ssh.scp "/var/lib/lxc/#{name}/rootfs/opt/master-chef/etc/override_ohai.json", JSON.dump(override_ohai) unless override_ohai.empty? || @params[:no_ohai_override]
       @ssh.exec "umount /dev/#{vm[:vm][:lvm][:vg_name]}/#{name}" if lvm_mode
-      @ssh.exec "rm /tmp/lxc_config"
+      @ssh.exec "rm /tmp/lxc_config_#{Process.pid.to_s}"
       @ssh.exec "lxc-start -d -n #{name}"
       @ssh.exec "ln -s /var/lib/lxc/#{name}/config /etc/lxc/auto/#{name}"
       wait_ssh ip_config[:ip], user
