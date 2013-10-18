@@ -26,7 +26,7 @@ Capistrano::Configuration.instance.load do
           :run_list => roles.map{|x| "role[#{x}]"} + recipes.map{|x| "recipe[#{x}]"},
           :node_config => {
             :topology_node_name => node[:topology_name]
-          }.merge(node[:node_override] || {})
+          },
         })
         puts json
         f = Tempfile.new File.basename("local_json_#{name}")
