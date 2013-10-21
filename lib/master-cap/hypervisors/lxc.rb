@@ -130,7 +130,7 @@ EOF
       @ssh.exec "umount /dev/#{vm[:vm][:lvm][:vg_name]}/#{name}" if lvm_mode
       @ssh.exec "rm /tmp/lxc_config_#{name}"
       @ssh.exec "lxc-start -d -n #{name}"
-      @ssh.exec "ln -s /var/lib/lxc/#{name}/config /etc/lxc/auto/#{name}"
+      @ssh.exec "ln -s /var/lib/lxc/#{name}/config /etc/lxc/auto/#{name}.conf"
       wait_ssh ip_config[:ip], user
     end
   end
