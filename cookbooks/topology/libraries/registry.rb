@@ -86,7 +86,10 @@ class RegistryMasterCap < Registry
                 result << {"uri" => eval('"' + config[:string] + '"'), "layer" => LAYER_STANDARD}
             end
           when :mysql
-            load_extensions
+            load_extensions LocalStorage
+            load_extensions LocalStorage
+            load_extensions LocalStorage
+            load_extensions MysqlHelper
             mysql_conf = mysql_config(config[:id].to_s)
             topology_nodes = find_using_topology(config[:target_role], config[:ip_type], max_layer)
             if mysql_conf[:database]
@@ -97,6 +100,24 @@ class RegistryMasterCap < Registry
             else
               topology_nodes.each do |topology_node|
                 uri = "mysql://#{topology_node["ip"]}:3306"
+                topology_node['id'] = config[:id]
+                topology_node['uri'] = uri
+              end
+            end
+            result += topology_nodes
+          when :postgresql
+            load_extensions LocalStorage
+            load_extensions PostgresqlHelper
+            postgresql_conf = postgresql_config(config[:id].to_s)
+            topology_nodes = find_using_topology(config[:target_role], config[:ip_type], max_layer)
+            if postgresql_conf[:database]
+              topology_nodes.each do |topology_node|
+                topology_node["id"] = config[:id]
+                topology_node["uri"] = "postgresql://#{encode(postgresql_conf[:username])}:#{encode(postgresql_conf[:password])}@#{topology_node["ip"]}:5432/#{postgresql_conf[:database]}"
+              end
+            else
+              topology_nodes.each do |topology_node|
+                uri = "postgresql://#{topology_node["ip"]}:5432"
                 topology_node['id'] = config[:id]
                 topology_node['uri'] = uri
               end
@@ -158,13 +179,12 @@ class RegistryMasterCap < Registry
 
   private
 
-  @@extensions_loaded = false
+  @@extensions_loaded = []
 
-  def load_extensions
-    return if @@extensions_loaded
-    self.class.send(:include, LocalStorage)
-    self.class.send(:include, MysqlHelper)
-    @@extensions_loaded = true
+  def load_extensions clazz
+    return if @@extensions_loaded.include? clazz
+    self.class.send(:include, clazz)
+    @@extensions_loaded << clazz
   end
 
   def recurse_interpolate(o)
