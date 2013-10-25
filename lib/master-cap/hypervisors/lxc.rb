@@ -139,7 +139,7 @@ EOF
     return unless no_dry
     l.each do |name, vm|
       puts "Deleting #{name}"
-      @ssh.exec "lxc-stop -n #{name}"
+      @ssh.exec "lxc-kill -n #{name} || true"
       @ssh.exec "lxc-destroy -n #{name}"
       @ssh.exec "rm -f /etc/lxc/auto/#{name}"
     end

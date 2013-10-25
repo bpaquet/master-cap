@@ -23,11 +23,11 @@ Capistrano::Configuration.instance.load do
       unless DNS[:dns]
         params = config[:params] || {}
         type = config[:type]
-        clazz = "Dns#{type.to_s.capitalize}"
+        clazz = "Dns#{type}"
         begin
           Object.const_get clazz
         rescue
-          require "master-cap/dns/#{type}.rb"
+          require "master-cap/dns/#{type.underscore}.rb"
         end
         DNS[:dns] = Object.const_get(clazz).new(self, params)
       end
@@ -227,7 +227,7 @@ Capistrano::Configuration.instance.load do
           uniq_map[r[:name]] = r[:ip]
         end
         ll = uniq_map.map{|k, v| {:name => k, :ip => v}}
-        dns.sync name, ll, purge if exists?(:no_dry)
+        dns.sync name, ll, purge, exists?(:no_dry)
       end
     end
 
