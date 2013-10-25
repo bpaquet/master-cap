@@ -1,7 +1,7 @@
 
 add_apt_repository "stgraber" do
   url "http://ppa.launchpad.net/stgraber/stgraber.net/ubuntu"
-  key "0E7716B13"
+  key "E7716B13"
   key_server "keyserver.ubuntu.com"
 end
 
