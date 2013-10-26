@@ -1,7 +1,7 @@
 
-add_apt_repository "stgraber" do
-  url "http://ppa.launchpad.net/stgraber/stgraber.net/ubuntu"
-  key "E7716B13"
+add_apt_repository "bpaquet_lxc" do
+  url "http://ppa.launchpad.net/bpaquet/lxc/ubuntu"
+  key "C4832F92"
   key_server "keyserver.ubuntu.com"
 end
 
