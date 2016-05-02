@@ -78,18 +78,21 @@ Capistrano::Configuration.instance.load do
 
     def hyp_list
       hypervisors = []
-      find_servers(:roles => :linux_chef).each do |s|
-        env, node = find_node s.host
+      find_servers(:roles => :linux_chef).each do |s| 
+        env, node = find_node s.host 
+        hostname = s.host
         hypervisor_name = hyp_for_vm env, node, s
         next if no_hyp? hypervisor_name
         hypervisors << hypervisor_name unless hypervisors.include? hypervisor_name
       end
       hypervisors.sort
-    end
+      hypervisors << hostname
+    end 
 
     task :list_hyp do
-      puts hyp_list
-    end
+      hypervisors = hyp_list
+      puts "#{hypervisors.last} is on #{hypervisors.drop(-1)}"
+    end 
 
     task :list_vms do
       exists, not_exists = list_vms
